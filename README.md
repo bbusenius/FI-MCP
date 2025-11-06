@@ -12,6 +12,8 @@ the web. It also boosts confidence for the user because it allows us to know whe
 calculation is coming from. Math can be checked in the [FI library](https://github.com/bbusenius/FI)
 and the associated blog article or forum link (where applicable).
 
+<img width="962" height="1357" alt="image" src="https://github.com/user-attachments/assets/7f52eda5-5397-4d0c-bc27-7a43b4862560" />
+
 ## Features
 
 - **Auto-discovery**: Automatically finds all functions in the FI library
