@@ -7,7 +7,7 @@ Converts FI function signatures to MCP tool schemas automatically.
 import logging
 import re
 from inspect import signature
-from typing import Any, Dict, List
+from typing import Any, Dict, List, get_args
 
 from .introspection import (
     convert_type_annotation,
@@ -43,8 +43,17 @@ def generate_mcp_tool_schema(func_name: str, func: callable) -> Dict[str, Any]:
 
         properties[param_name] = {"type": param_type, "description": param_description}
 
-        # Handle special cases for enum/literal types
+        # Handle array types with item specifications
         annotation_str = str(param.annotation)
+        if param_type == "array":
+            # Extract item type for List[T] using typing.get_args
+            type_args = get_args(param.annotation)
+            if type_args:
+                # Use convert_type_annotation on the extracted type
+                item_type = convert_type_annotation(type_args[0])
+                properties[param_name]["items"] = {"type": item_type}
+
+        # Handle special cases for enum/literal types
         if annotation_str.startswith('typing.Literal'):
             # Extract literal values for enum
             literal_values = _extract_literal_values(annotation_str)

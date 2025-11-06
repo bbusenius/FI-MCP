@@ -134,8 +134,21 @@ def convert_type_annotation(type_annotation: type) -> str:
     """
     type_str = str(type_annotation)
 
+    # Check for container types first (before basic types)
+    # Otherwise List[float] would match 'float' before 'List'
+    #
+    # Dual checks (type_annotation == float or 'float' in type_str):
+    # - Direct type comparison for standard annotations
+    # - String-based check for string annotations, forward references,
+    #   and code that explicitly uses `from __future__ import annotations`
+    #   (PEP 563 opt-in behavior that makes all annotations strings)
+    # - This is just defensive programming
+    if 'List' in type_str or 'list' in type_str:
+        return "array"
+    elif 'Dict' in type_str or 'dict' in type_str:
+        return "object"
     # Handle basic types
-    if type_annotation == float or 'float' in type_str:
+    elif type_annotation == float or 'float' in type_str:
         return "number"
     elif type_annotation == int or 'int' in type_str:
         return "integer"
@@ -143,10 +156,6 @@ def convert_type_annotation(type_annotation: type) -> str:
         return "string"
     elif type_annotation == bool or 'bool' in type_str:
         return "boolean"
-    elif 'List' in type_str or 'list' in type_str:
-        return "array"
-    elif 'Dict' in type_str or 'dict' in type_str:
-        return "object"
     else:
         # Default to string for custom types like Money, Percent, etc.
         return "string"

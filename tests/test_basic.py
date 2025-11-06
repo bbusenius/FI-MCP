@@ -10,7 +10,7 @@ import fi
 import pytest
 
 from fi_mcp.introspection import get_fi_functions, get_mcp_func_args
-from fi_mcp.schema_generator import generate_all_tool_schemas
+from fi_mcp.schema_generator import generate_all_tool_schemas, generate_mcp_tool_schema
 
 
 @pytest.fixture(scope="module")
@@ -79,3 +79,41 @@ def test_specific_function():
     result = func(*converted_args)
     assert result > 1000, "Future value should be greater than present value"
     assert isinstance(result, (int, float, Decimal)), "Result should be numeric"
+
+
+def test_array_parameter_handling():
+    """Test that array parameters are correctly handled in schema and function calls"""
+    # Test schema generation for function with List parameter
+    func = fi.take_home_pay
+    schema = generate_mcp_tool_schema('take_home_pay', func)
+
+    # Verify taxes_and_fees is defined as an array
+    taxes_param = schema['parameters']['properties']['taxes_and_fees']
+    assert taxes_param['type'] == 'array', "taxes_and_fees should be array type"
+    assert 'items' in taxes_param, "Array parameter should have items definition"
+    assert taxes_param['items']['type'] == 'number', "Array items should be number type"
+
+    # Test calling the function with array argument
+    sig = signature(func)
+    mcp_args = {
+        'gross_pay': 8528,
+        'employer_match': 652,
+        'taxes_and_fees': [712, 100, 50.0],
+    }
+
+    fail, converted_args = get_mcp_func_args(sig.parameters, mcp_args)
+
+    assert not fail, "Argument conversion should succeed with array parameter"
+    assert len(converted_args) == 3, "Should have 3 converted arguments"
+    assert isinstance(converted_args[2], list), "Third argument should be a list"
+    assert len(converted_args[2]) == 3, "List should have 3 items"
+
+    # Call the function and verify it works
+    result = func(*converted_args)
+    assert result is not None, "Function should return a result"
+    # Result should be roughly gross_pay + employer_match - sum(taxes_and_fees)
+    # Expected: 8528 + 652 - (712 + 100 + 50) = 8318
+    result_str = str(result).replace('$', '').replace(',', '')
+    assert (
+        result_str == '8318' or result_str == '8318.00'
+    ), f"Expected 8318 but got {result}"
