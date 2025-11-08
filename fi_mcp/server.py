@@ -64,13 +64,21 @@ def _format_function_name(func_name: str) -> str:
     """
     Convert function_name to Function Name (Title Case).
 
+    Special handling for abbreviations:
+    - FI (Financial Independence) is always uppercase
+    - POT (Pay-Over-Tuition) is always uppercase
+
     Args:
         func_name: Function name with underscores.
 
     Returns:
         Formatted name with spaces and title case.
     """
-    return func_name.replace('_', ' ').title()
+    formatted = func_name.replace('_', ' ').title()
+    # Handle special abbreviations
+    formatted = formatted.replace('Fi', 'FI')
+    formatted = formatted.replace('Pot', 'POT')
+    return formatted
 
 
 def _get_function_docstring(func: callable) -> str:
